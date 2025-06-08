@@ -1,0 +1,333 @@
+# Panduan Setup Laravel Backend untuk Aplikasi Andromeda
+
+## 1. Persiapan Environment
+
+### Instalasi Laravel
+```bash
+# Buat project Laravel baru
+composer create-project laravel/laravel andromeda-backend
+
+# Masuk ke direktori project
+cd andromeda-backend
+
+# Install Laravel Sanctum untuk API authentication
+composer require laravel/sanctum
+
+# Publish Sanctum configuration
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+```
+
+### Konfigurasi Database
+```bash
+# Edit file .env
+DB_CONNECTION=sqlite
+DB_DATABASE=/path/to/your/database/andromeda.sqlite
+
+# Buat file database SQLite
+touch database/andromeda.sqlite
+```
+
+## 2. Setup Authentication
+
+### Konfigurasi Sanctum
+```php
+// config/sanctum.php
+'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
+    '%s%s',
+    'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+    env('APP_URL') ? ','.parse_url(env('APP_URL'), PHP_URL_HOST) : ''
+))),
+```
+
+### Update Models untuk Sanctum
+```php
+// app/Models/Admin.php dan app/Models/User.php
+use Laravel\Sanctum\HasApiTokens;
+
+class Admin extends Authenticatable
+{
+    use HasApiTokens, Notifiable;
+    // ... rest of the code
+}
+```
+
+## 3. Setup Middleware
+
+### Daftarkan Middleware
+```php
+// app/Http/Kernel.php
+protected $middlewareAliases = [
+    // ... existing middleware
+    'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    'user' => \App\Http\Middleware\UserMiddleware::class,
+];
+```
+
+### Konfigurasi CORS
+```bash
+# Install Laravel CORS
+composer require fruitcake/laravel-cors
+
+# Publish config
+php artisan vendor:publish --tag="cors"
+```
+
+```php
+// config/cors.php
+'paths' => ['api/*', 'sanctum/csrf-cookie'],
+'allowed_methods' => ['*'],
+'allowed_origins' => ['*'], // Sesuaikan dengan domain frontend
+'allowed_headers' => ['*'],
+'supports_credentials' => true,
+```
+
+## 4. Menjalankan Migration dan Seeder
+
+```bash
+# Jalankan migration
+php artisan migrate
+
+# Buat seeder untuk admin
+php artisan make:seeder AdminSeeder
+
+# Jalankan seeder
+php artisan db:seed --class=AdminSeeder
+```
+
+## 5. Setup File Storage
+
+```bash
+# Buat symbolic link untuk storage
+php artisan storage:link
+
+# Buat direktori untuk upload
+mkdir -p storage/app/public/materi/images
+mkdir -p storage/app/public/materi/videos
+mkdir -p storage/app/public/soal/images
+mkdir -p storage/app/public/soal/videos
+mkdir -p storage/app/public/admin/profile
+mkdir -p storage/app/public/users/profile
+```
+
+## 6. Konfigurasi File Upload
+
+```php
+// config/filesystems.php
+'public' => [
+    'driver' => 'local',
+    'root' => storage_path('app/public'),
+    'url' => env('APP_URL').'/storage',
+    'visibility' => 'public',
+],
+```
+
+## 7. API Endpoints
+
+### Authentication Endpoints
+```
+POST /api/auth/admin/login
+POST /api/auth/user/login
+POST /api/auth/user/register
+POST /api/auth/logout
+```
+
+### Admin Endpoints
+```
+GET    /api/admin/profile
+PUT    /api/admin/profile
+GET    /api/admin/materi
+POST   /api/admin/materi
+GET    /api/admin/materi/{id}
+PUT    /api/admin/materi/{id}
+DELETE /api/admin/materi/{id}
+GET    /api/admin/materi/search/{query}
+GET    /api/admin/soal
+POST   /api/admin/soal
+GET    /api/admin/soal/{id}
+PUT    /api/admin/soal/{id}
+DELETE /api/admin/soal/{id}
+GET    /api/admin/kuis
+POST   /api/admin/kuis
+GET    /api/admin/kuis/{id}
+PUT    /api/admin/kuis/{id}
+DELETE /api/admin/kuis/{id}
+POST   /api/admin/kuis/{kuis}/add-soal
+DELETE /api/admin/kuis/{kuis}/remove-soal/{soal}
+GET    /api/admin/user-answers
+GET    /api/admin/quiz-results
+```
+
+### User Endpoints
+```
+GET  /api/user/profile
+PUT  /api/user/profile
+GET  /api/user/materi
+GET  /api/user/materi/{id}
+GET  /api/user/kuis
+GET  /api/user/kuis/{id}
+POST /api/user/kuis/{id}/start
+POST /api/user/kuis/{kuis}/answer
+GET  /api/user/kuis/{id}/result
+```
+
+## 8. Contoh Request dan Response
+
+### Login Admin
+```json
+// POST /api/auth/admin/login
+{
+    "username": "admin",
+    "password": "admin123"
+}
+
+// Response
+{
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@andromeda.com",
+        "nama_lengkap": "Administrator Andromeda"
+    },
+    "token": "1|abcdef...",
+    "user_type": "admin"
+}
+```
+
+### Tambah Materi
+```json
+// POST /api/admin/materi
+// Headers: Authorization: Bearer {token}
+// Content-Type: multipart/form-data
+
+{
+    "judul": "Pengenalan Android",
+    "konten_materi": "Materi tentang dasar-dasar Android...",
+    "gambar": "file",
+    "video": "file"
+}
+```
+
+### Submit Jawaban
+```json
+// POST /api/user/kuis/{kuis_id}/answer
+// Headers: Authorization: Bearer {token}
+
+{
+    "soal_id": 1,
+    "jawaban_user": "A"
+}
+
+// Response
+{
+    "message": "Answer submitted successfully",
+    "is_correct": true
+}
+```
+
+## 9. Menjalankan Server
+
+```bash
+# Development server
+php artisan serve
+
+# Atau dengan custom host dan port
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+## 10. Testing API
+
+### Menggunakan Postman
+1. Import collection dengan endpoints di atas
+2. Set environment variables untuk base URL dan token
+3. Test semua endpoints
+
+### Menggunakan cURL
+```bash
+# Login admin
+curl -X POST http://localhost:8000/api/auth/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# Get materi dengan authentication
+curl -X GET http://localhost:8000/api/admin/materi \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## 11. Deployment
+
+### Konfigurasi Production
+```bash
+# Optimize autoloader
+composer install --optimize-autoloader --no-dev
+
+# Cache config dan routes
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Set permissions
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+```
+
+### Environment Variables
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/path/to/production/database.sqlite
+
+SANCTUM_STATEFUL_DOMAINS=yourdomain.com
+```
+
+## 12. Fitur Tambahan
+
+### Logging Activity
+Semua aktivitas user sudah di-log di tabel `user_activity_log`
+
+### Validation Rules
+Semua input sudah divalidasi dengan rules yang tepat
+
+### File Upload Security
+- Validasi tipe file
+- Batasan ukuran file
+- Storage aman di direktori public
+
+### Database Optimization
+- Index pada kolom yang sering diquery
+- Foreign key constraints
+- Soft deletes (jika diperlukan)
+
+## 13. Troubleshooting
+
+### Error 500
+```bash
+# Check logs
+tail -f storage/logs/laravel.log
+
+# Clear cache
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+```
+
+### CORS Issues
+```php
+// config/cors.php
+'allowed_origins' => ['http://localhost:3000', 'https://yourdomain.com'],
+'supports_credentials' => true,
+```
+
+### File Upload Issues
+```bash
+# Check permissions
+ls -la storage/app/public/
+
+# Create missing directories
+mkdir -p storage/app/public/uploads
+```
+
+Dengan setup ini, Laravel backend untuk aplikasi Andromeda sudah siap digunakan dengan semua fitur yang dibutuhkan sesuai spesifikasi awal.

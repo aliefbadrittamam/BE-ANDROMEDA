@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
             'username' => 'admin',
             'password' => Hash::make('admin123'),
             'email' => 'admin@andromeda.com',
-            'nama_lengkap' => 'Administrator Andromeda'
+            'nama_lengkap' => 'Administrator Andromeda',
         ]);
     }
 }
