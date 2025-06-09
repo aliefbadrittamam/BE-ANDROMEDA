@@ -16,6 +16,9 @@ class UserJawaban extends Model
         'is_correct' => 'boolean',
     ];
 
+    // Enable timestamps (created_at, updated_at)
+    public $timestamps = true;
+
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('activity_type', 50);
             $table->text('activity_description')->nullable();
             $table->timestamp('timestamp')->useCurrent();
+            $table->timestamps(); // Tambahkan untuk konsistensi
             
             $table->index('user_id');
             $table->index('timestamp');

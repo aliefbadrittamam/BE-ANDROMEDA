@@ -15,7 +15,8 @@ class UserActivityLog extends Model
         'timestamp' => 'datetime',
     ];
 
-    public $timestamps = false;
+    // Enable timestamps untuk konsistensi
+    public $timestamps = true;
 
     protected static function boot()
     {

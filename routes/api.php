@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
@@ -14,14 +15,9 @@ Route::post('/user/login', [AuthController::class, 'userLogin']);
 Route::post('/user/register', [AuthController::class, 'userRegister']);
 
 // Admin routes
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    
-    // Admin profile
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('/profile', [AdminController::class, 'profile']);
-    Route::post('/profile', [AdminController::class, 'updateProfile']);
-    
-    // Admin monitoring
+    Route::put('/profile', [AdminController::class, 'updateProfile']);
     Route::get('/user-answers', [AdminController::class, 'getUserAnswers']);
     Route::get('/quiz-results', [AdminController::class, 'getQuizResults']);
     
@@ -34,26 +30,26 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     
     // Kuis management
     Route::apiResource('kuis', KuisController::class);
-    Route::post('kuis/{kuis}/soal', [KuisController::class, 'addSoal']);
-    Route::delete('kuis/{kuis}/soal/{soal}', [KuisController::class, 'removeSoal']);
+    Route::post('kuis/{kuisId}/soal', [KuisController::class, 'addSoal']);
+    Route::delete('kuis/{kuisId}/soal/{soalId}', [KuisController::class, 'removeSoal']);
 });
 
 // User routes
-Route::middleware(['auth:sanctum', 'user'])->prefix('user')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    
-    // User profile
+Route::middleware(['auth:sanctum'])->prefix('user')->group(function () {
     Route::get('/profile', [UserController::class, 'profile']);
-    Route::post('/profile', [UserController::class, 'updateProfile']);
+    Route::put('/profile', [UserController::class, 'updateProfile']);
     
-    // User access to materi
+    // Materi untuk user
     Route::get('/materi', [MateriController::class, 'userIndex']);
     Route::get('/materi/{id}', [MateriController::class, 'userShow']);
     
-    // User access to kuis
+    // Kuis untuk user
     Route::get('/kuis', [KuisController::class, 'userIndex']);
     Route::get('/kuis/{id}', [KuisController::class, 'userShow']);
     Route::post('/kuis/{id}/start', [KuisController::class, 'startQuiz']);
-    Route::post('/kuis/{id}/answer', [KuisController::class, 'submitAnswer']);
+    Route::post('/kuis/{kuisId}/submit', [KuisController::class, 'submitAnswer']);
     Route::get('/kuis/{id}/result', [KuisController::class, 'getResult']);
 });
+
+// Logout route (untuk semua user)
+Route::middleware(['auth:sanctum'])->post('/logout', [AuthController::class, 'logout']);

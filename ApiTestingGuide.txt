@@ -1,0 +1,405 @@
+# Panduan Testing API E-Learning System
+
+## Persiapan
+
+### 1. Jalankan Migration dan Seeder
+```bash
+php artisan migrate:fresh --seed
+```
+
+### 2. Start Server
+```bash
+php artisan serve
+```
+
+Base URL: `http://localhost:8000/api`
+
+---
+
+## 1. AUTHENTICATION
+
+### Admin Login
+**POST** `/admin/login`
+```json
+{
+    "username": "admin",
+    "password": "password"
+}
+```
+
+**Response:**
+```json
+{
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@example.com",
+        "nama_lengkap": "Administrator"
+    },
+    "token": "1|abcdef...",
+    "user_type": "admin"
+}
+```
+
+### User Register
+**POST** `/user/register`
+```json
+{
+    "username": "testuser",
+    "password": "password123",
+    "email": "test@example.com",
+    "nama_lengkap": "Test User"
+}
+```
+
+### User Login
+**POST** `/user/login`
+```json
+{
+    "username": "user1",
+    "password": "password"
+}
+```
+
+---
+
+## 2. ADMIN OPERATIONS
+
+**Gunakan token admin untuk semua request admin**
+Header: `Authorization: Bearer {admin_token}`
+
+### Kelola Materi
+
+#### Lihat Semua Materi
+**GET** `/admin/materi`
+
+#### Buat Materi Baru
+**POST** `/admin/materi`
+```json
+{
+    "judul": "JavaScript Fundamentals",
+    "konten_materi": "JavaScript adalah bahasa pemrograman yang digunakan untuk membuat website interaktif."
+}
+```
+
+#### Update Materi
+**PUT** `/admin/materi/1`
+```json
+{
+    "judul": "JavaScript Advanced",
+    "konten_materi": "Materi JavaScript tingkat lanjut dengan ES6+ features."
+}
+```
+
+#### Hapus Materi
+**DELETE** `/admin/materi/1`
+
+### Kelola Soal
+
+#### Lihat Semua Soal
+**GET** `/admin/soal`
+
+#### Buat Soal Baru
+**POST** `/admin/soal`
+```json
+{
+    "judul": "JavaScript - Variables",
+    "pertanyaan": "Manakah cara yang benar untuk mendeklarasikan variabel dengan let?",
+    "pilihan_a": "let x = 5;",
+    "pilihan_b": "variable x = 5;",
+    "pilihan_c": "var x = 5;",
+    "pilihan_d": "x = 5;",
+    "jawaban_benar": "A"
+}
+```
+
+#### Update Soal
+**PUT** `/admin/soal/1`
+```json
+{
+    "judul": "PHP Variables - Updated",
+    "pertanyaan": "Bagaimana cara yang benar mendeklarasikan variabel dalam PHP?",
+    "pilihan_a": "$nama = \"John\";",
+    "pilihan_b": "var nama = \"John\";",
+    "pilihan_c": "let nama = \"John\";",
+    "pilihan_d": "nama = \"John\";",
+    "jawaban_benar": "A"
+}
+```
+
+### Kelola Kuis
+
+#### Lihat Semua Kuis
+**GET** `/admin/kuis`
+
+#### Buat Kuis Baru
+**POST** `/admin/kuis`
+```json
+{
+    "nama_kuis": "Kuis JavaScript Dasar",
+    "deskripsi": "Menguji pemahaman dasar JavaScript",
+    "deadline": "2025-06-20 23:59:59",
+    "durasi_menit": 60,
+    "status": "published"
+}
+```
+
+#### Tambah Soal ke Kuis
+**POST** `/admin/kuis/1/soal`
+```json
+{
+    "soal_ids": [1, 2, 3]
+}
+```
+
+#### Hapus Soal dari Kuis
+**DELETE** `/admin/kuis/1/soal/2`
+
+#### Lihat Hasil Kuis
+**GET** `/admin/quiz-results`
+
+Query parameters:
+- `kuis_id`: Filter by quiz ID
+- `status`: Filter by status (ongoing/completed/timeout)
+
+#### Lihat Jawaban User
+**GET** `/admin/user-answers`
+
+Query parameters:
+- `kuis_id`: Filter by quiz ID
+- `user_id`: Filter by user ID
+
+---
+
+## 3. USER OPERATIONS
+
+**Gunakan token user untuk semua request user**
+Header: `Authorization: Bearer {user_token}`
+
+### Profile Management
+
+#### Lihat Profile
+**GET** `/user/profile`
+
+#### Update Profile
+**PUT** `/user/profile`
+```json
+{
+    "email": "newemail@example.com",
+    "nama_lengkap": "Nama Lengkap Baru"
+}
+```
+
+### Akses Materi
+
+#### Lihat Semua Materi
+**GET** `/user/materi`
+
+#### Lihat Detail Materi
+**GET** `/user/materi/1`
+
+### Mengerjakan Kuis
+
+#### Lihat Kuis yang Tersedia
+**GET** `/user/kuis`
+
+#### Lihat Detail Kuis
+**GET** `/user/kuis/1`
+
+#### Mulai Kuis
+**POST** `/user/kuis/1/start`
+
+#### Submit Jawaban
+**POST** `/user/kuis/1/submit`
+```json
+{
+    "soal_id": 1,
+    "jawaban_user": "A"
+}
+```
+
+#### Lihat Hasil Kuis
+**GET** `/user/kuis/1/result`
+
+---
+
+## 4. SKENARIO TESTING LENGKAP
+
+### Skenario 1: Admin Membuat Konten
+
+1. **Login sebagai admin**
+```bash
+POST /admin/login
+{
+    "username": "admin",
+    "password": "password"
+}
+```
+
+2. **Buat materi baru**
+```bash
+POST /admin/materi
+{
+    "judul": "React Hooks",
+    "konten_materi": "React Hooks memungkinkan menggunakan state dan lifecycle di functional component."
+}
+```
+
+3. **Buat soal-soal**
+```bash
+POST /admin/soal
+{
+    "judul": "React - useState",
+    "pertanyaan": "Hook mana yang digunakan untuk state management?",
+    "pilihan_a": "useState",
+    "pilihan_b": "useEffect",
+    "pilihan_c": "useContext",
+    "pilihan_d": "useReducer",
+    "jawaban_benar": "A"
+}
+```
+
+4. **Buat kuis dan tambah soal**
+```bash
+POST /admin/kuis
+{
+    "nama_kuis": "Kuis React Hooks",
+    "deskripsi": "Test pemahaman React Hooks",
+    "deadline": "2025-06-25 23:59:59",
+    "durasi_menit": 30,
+    "status": "published"
+}
+
+POST /admin/kuis/3/soal
+{
+    "soal_ids": [5]
+}
+```
+
+### Skenario 2: User Belajar dan Mengerjakan Kuis
+
+1. **Login sebagai user**
+```bash
+POST /user/login
+{
+    "username": "user1",
+    "password": "password"
+}
+```
+
+2. **Baca materi**
+```bash
+GET /user/materi
+GET /user/materi/1
+```
+
+3. **Lihat kuis yang tersedia**
+```bash
+GET /user/kuis
+```
+
+4. **Mulai mengerjakan kuis**
+```bash
+GET /user/kuis/1
+POST /user/kuis/1/start
+```
+
+5. **Submit jawaban**
+```bash
+POST /user/kuis/1/submit
+{
+    "soal_id": 1,
+    "jawaban_user": "A"
+}
+
+POST /user/kuis/1/submit
+{
+    "soal_id": 2,
+    "jawaban_user": "B"
+}
+```
+
+6. **Lihat hasil**
+```bash
+GET /user/kuis/1/result
+```
+
+### Skenario 3: Admin Monitoring
+
+1. **Lihat hasil semua kuis**
+```bash
+GET /admin/quiz-results
+```
+
+2. **Lihat jawaban detail**
+```bash
+GET /admin/user-answers?kuis_id=1
+```
+
+3. **Filter berdasarkan user**
+```bash
+GET /admin/user-answers?user_id=2
+```
+
+---
+
+## 5. ERROR HANDLING
+
+### Kemungkinan Error Response:
+
+#### 401 - Unauthorized
+```json
+{
+    "message": "Unauthorized"
+}
+```
+
+#### 422 - Validation Error
+```json
+{
+    "errors": {
+        "username": ["The username field is required."],
+        "password": ["The password must be at least 6 characters."]
+    }
+}
+```
+
+#### 404 - Not Found
+```json
+{
+    "message": "Kuis not found"
+}
+```
+
+#### 403 - Forbidden
+```json
+{
+    "message": "Kuis sudah melewati deadline"
+}
+```
+
+---
+
+## 6. TIPS TESTING
+
+1. **Gunakan Postman atau Insomnia** untuk testing API
+2. **Set environment variables** untuk base URL dan tokens
+3. **Test dengan data valid dan invalid** untuk memastikan validation bekerja
+4. **Test authorization** dengan token yang benar dan salah
+5. **Test edge cases** seperti kuis yang sudah expired, user yang sudah mengerjakan kuis, dll
+
+## 7. LOGOUT
+
+### Logout (Admin/User)
+**POST** `/logout`
+Header: `Authorization: Bearer {token}`
+
+---
+
+## Database Reset
+
+Jika ingin reset data untuk testing ulang:
+```bash
+php artisan migrate:fresh --seed
+```

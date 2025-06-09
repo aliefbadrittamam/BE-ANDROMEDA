@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('jawaban_user', ['A', 'B', 'C', 'D']);
             $table->boolean('is_correct')->default(false);
             $table->dateTime('waktu_jawab')->useCurrent();
+            $table->timestamps(); 
             
             $table->unique(['user_id', 'kuis_id', 'soal_id']);
             $table->index('user_id');
